@@ -59,9 +59,7 @@ class Board:
                 coordinates = (loc, y)
 
             ship.add_location(*coordinates, False)
-            value = deepcopy(self.default_loc)
-            value['ship'] = ship
-            self.matrix[coordinates[0]][coordinates[1]] = value
+            self.matrix[coordinates[0]][coordinates[1]]['ship'] = ship
 
         self.ships.append(ship)
 
@@ -97,6 +95,7 @@ class Board:
 
             ship.add_location(*coordinates, False)
             self.matrix[coordinates[0]][coordinates[1]]['ship'] = ship
+
         self.ships.append(ship)
 
     def validate_ship_position(self, size, direction, x, y):
@@ -143,8 +142,8 @@ class Board:
 
 
 
-b = Board()
+'''b = Board()
 
 b.build_fleet_random()
 
-print(b)
+print(b)'''
