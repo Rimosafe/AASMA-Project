@@ -16,6 +16,7 @@ class Ship:
     def hit(self, x, y):
         for loc in self.locations:
             if (x, y) == (loc['x'], loc['y']):
+                self.hits += 1
                 loc['hit'] = True
 
     def is_sunk(self):
