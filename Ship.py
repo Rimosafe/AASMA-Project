@@ -36,26 +36,3 @@ class Ship:
         for loc in self.locations:
             locations.append((loc['x'], loc['y']))
         return '<Ship: {} {}>'.format(self.name, locations)
-
-
-"""s = Ship('Destroyer', 5)
-
-print(s.print_location())
-
-s.hit(2, 4)
-
-print(s.print_location())
-
-s.hit(1, 4)
-
-print(s.print_location())
-
-s.hit(3, 4)
-
-s.hit(4, 4)
-
-print(s.print_location())
-
-print(s.is_sunk())
-
-print(s)"""

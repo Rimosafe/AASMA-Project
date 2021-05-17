@@ -1,14 +1,20 @@
 from Player import Player
+from Agent import *
+from Satellite import Satellite
 
 
 class Game:
     COLS = 10
     ROWS = 10
 
+    AGENT_TYPES = ['Random', 'Reactive', 'Learning']
+
     def __init__(self):
         self.players = []
+        self.one_player = True
+        self.satellite = Satellite()
 
-    def set_players_game(self):
+    def set_human_players(self):
         n_players = int(input("You will play with 1 or 2 players? "))
 
         if 0 > n_players > 2:
@@ -25,6 +31,8 @@ class Game:
 
         else:
             name = input("Name of player 1: ")
+
+            self.one_player = False
 
             player1 = Player(name)
 
@@ -55,6 +63,31 @@ class Game:
                 self.place_ships_auto(1)
                 print('Fleet build with success.')
 
+    def set_agent_players(self, agent1, agent2=None):
+        player2 = None
+        if agent1 not in self.AGENT_TYPES:
+            print("Agent 1 invalid.")
+
+        player1 = get_type_agent(agent1)
+        self.players.append(player1)
+
+        # If agent 2 was given
+        if agent2:
+            # If agent 2 type don't exist
+            if agent2 in self.AGENT_TYPES:
+                self.one_player = False
+                player2 = get_type_agent(agent2)
+                self.place_ships_auto(0)
+                self.satellite.boards[0] = self.players[0].board
+            else:
+                print('Agent 2 invalid.')
+        else:
+            player2 = Player('Bot')
+
+        self.players.append(player2)
+        self.place_ships_auto(1)
+        self.satellite.boards[1] = self.players[1].board
+
     def place_ships_manually(self, player):
         self.players[player].board.build_fleet_manually()
 
@@ -63,11 +96,110 @@ class Game:
 
     def game_over(self):
         for player in self.players:
-            if player.ships_sunk == 5:
+            if player.sunken_ships == 5:
+                print(player.name, "wins!")
                 return True
 
-    def play(self):
-        self.set_players_game()
+    def play(self, agent1=None, agent2=None):
+        if agent1 is None:
+            self.set_human_players()
+
+        self.set_agent_players(agent1, agent2)
+
+        if self.one_player:
+            self.agent_alone()
+        else:
+            self.agent_one_vs_one()
+
+    def agent_alone(self):
+        consecutive_hits = 0
+
+        x, y = self.players[0].policy(self.satellite)
+
+        while not self.game_over():
+
+            if self.satellite.check_shot(1, x, y):
+                self.players[1].board.matrix[x][y]['ship'].hit(x, y)
+                self.players[0].enemy_board[x][y] = 'H'
+                self.players[0].hit_shot += 1
+                consecutive_hits += 1
+
+                # Ship sunk
+                if self.satellite.check_sunk(1, x, y):
+                    self.players[0].sunken_ships += 1
+
+            else:
+                if consecutive_hits > 1:
+                    self.players[0].consecutive_list.append(consecutive_hits)
+
+                consecutive_hits = 0
+                self.players[0].lost_shot += 1
+                self.players[0].enemy_board[x][y] = 'M'
+
+            self.satellite.boards[1].matrix[x][y]['visible'] = True
+
+            x, y = self.players[0].policy(self.satellite)
+
+        self.players[0].print_stats()
+
+    def agent_one_vs_one(self):
+
+        self.players[0].name = 'Tobias'
+        self.players[1].name = 'Jeremias'
+
+        consecutive_hits = 0
+
+        x1, y1 = self.players[0].policy(self.satellite, 1)
+        x2, y2 = self.players[1].policy(self.satellite, 0)
+
+        while not self.game_over():
+
+            if self.satellite.check_shot(1, x1, y1):
+                self.players[1].board.matrix[x1][y1]['ship'].hit(x1, y1)
+                self.players[0].enemy_board[x1][y1] = 'H'
+                self.players[0].hit_shot += 1
+                consecutive_hits += 1
+
+                # Ship sunk
+                if self.satellite.check_sunk(1, x1, y1):
+                    self.players[0].sunken_ships += 1
+
+            else:
+                if consecutive_hits > 1:
+                    self.players[0].consecutive_list.append(consecutive_hits)
+
+                consecutive_hits = 0
+                self.players[0].lost_shot += 1
+                self.players[0].enemy_board[x1][y1] = 'M'
+
+            if self.satellite.check_shot(0, x2, y2):
+                self.players[0].board.matrix[x2][y2]['ship'].hit(x2, y2)
+                self.players[1].enemy_board[x2][y2] = 'H'
+                self.players[1].hit_shot += 1
+                consecutive_hits += 1
+
+                # Ship sunk
+                if self.satellite.check_sunk(0, x2, y2):
+                    self.players[1].sunken_ships += 1
+
+            else:
+                if consecutive_hits > 1:
+                    self.players[1].consecutive_list.append(consecutive_hits)
+
+                consecutive_hits = 0
+                self.players[1].lost_shot += 1
+                self.players[1].enemy_board[x2][y2] = 'M'
+
+            self.satellite.boards[1].matrix[x1][y1]['visible'] = True
+            self.satellite.boards[0].matrix[x2][y2]['visible'] = True
+
+            x1, y1 = self.players[0].policy(self.satellite, 1)
+            x2, y2 = self.players[1].policy(self.satellite, 0)
+
+        self.players[0].print_stats()
+        self.players[1].print_stats()
+
+        return 0
 
     def print_player_game(self, player):
         print(end="\n         ")

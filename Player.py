@@ -7,7 +7,7 @@ class Player:
     def __init__(self, name):
         self.name = name
         self.board = Board()
-        self.enemy_board = [['_' for _ in range(10)] for _ in range(10)]
+        self.enemy_board = [['U' for _ in range(10)] for _ in range(10)]
         self.sunken_ships = 0
         self.lost_shot = 0
         self.hit_shot = 0
@@ -15,44 +15,37 @@ class Player:
         self.consecutive_list = []
         self.consecutive = False
 
-    def check_satellite(self, opponent_board, x, y):
-        position = deepcopy(opponent_board.matrix[x][y])
+    def print_stats(self):
+        print(end="\n")
+        print(self.name)
+        print("Hit shots: ", self.hit_shot)
+        print("Miss shots: ", self.lost_shot)
 
-        # Shot didn't hit
-        if position['ship'] is None:
-            return False
+        if len(self.consecutive_list) > 0:
+            print("Max consecutive hits: ", max(self.consecutive_list))
+        else:
+            print("Max consecutive hits: ", 1)
 
-        return True
-
-    def shot(self, opponent_board, x, y):
-
-        # Check if already shooted that position
-        if self.enemy_board[x][y] == 'x' or self.enemy_board[x][y] == 'o':
-            return False
+    '''def shot(self, opponent_board, x, y):
 
         # Access the satellite to check if the shot hit
         if not self.check_satellite(opponent_board, x, y):
-            self.lost_shot += 1
 
-            if self.consecutive_hits > 1:
-                self.consecutive_list.append(self.consecutive_hits)
-
-            self.consecutive = False
-            self.enemy_board[x][y] = 'o'
+            self.enemy_board[x][y] = 'Miss'
             return False
 
         # Hit the ship
         opponent_board.matrix[x][y]['ship'].hit(x, y)
-        self.enemy_board[x][y] = 'x'
+        self.enemy_board[x][y] = 'Hit'
         self.hit_shot += 1
+        print("Hit")
+        self.consecutive = True
 
         if self.consecutive:
             self.consecutive_hits += 1
-
-        self.consecutive = True
 
         # Ship sunk
         if opponent_board.matrix[x][y]['ship'].is_sunk():
             self.sunken_ships += 1
 
-        return True
+        return True'''
