@@ -1,4 +1,5 @@
 from Board import Board
+from Satellite import Satellite
 from copy import deepcopy
 
 
@@ -14,6 +15,7 @@ class Player:
         self.consecutive_hits = 0
         self.consecutive_list = []
         self.consecutive = False
+        self.satellite = Satellite()
 
     def print_stats(self):
         print(end="\n")

@@ -8,7 +8,7 @@ from Agent import RandomAgent
 #print(b1)
 
 g = Game()
-g.play('Random', 'Random')
+g.play('Reactive')
 
 
 # ag = RandomAgent()

@@ -1,7 +1,5 @@
 from Player import Player
 from Agent import *
-from Satellite import Satellite
-
 
 class Game:
     COLS = 10
@@ -12,7 +10,6 @@ class Game:
     def __init__(self):
         self.players = []
         self.one_player = True
-        self.satellite = Satellite()
 
     def set_human_players(self):
         n_players = int(input("You will play with 1 or 2 players? "))
@@ -78,15 +75,16 @@ class Game:
                 self.one_player = False
                 player2 = get_type_agent(agent2)
                 self.place_ships_auto(0)
-                self.satellite.boards[0] = self.players[0].board
+                self.players.append(player2)
+                self.players[1].satellite.map = self.players[0].board
             else:
                 print('Agent 2 invalid.')
         else:
             player2 = Player('Bot')
+            self.players.append(player2)
 
-        self.players.append(player2)
         self.place_ships_auto(1)
-        self.satellite.boards[1] = self.players[1].board
+        self.players[0].satellite.map = self.players[1].board
 
     def place_ships_manually(self, player):
         self.players[player].board.build_fleet_manually()
@@ -114,18 +112,18 @@ class Game:
     def agent_alone(self):
         consecutive_hits = 0
 
-        x, y = self.players[0].policy(self.satellite)
+        x, y = self.players[0].policy()
 
         while not self.game_over():
 
-            if self.satellite.check_shot(1, x, y):
+            if self.players[0].satellite.check_shot(x, y):
                 self.players[1].board.matrix[x][y]['ship'].hit(x, y)
                 self.players[0].enemy_board[x][y] = 'H'
                 self.players[0].hit_shot += 1
                 consecutive_hits += 1
 
                 # Ship sunk
-                if self.satellite.check_sunk(1, x, y):
+                if self.players[0].satellite.check_sunk(x, y):
                     self.players[0].sunken_ships += 1
 
             else:
@@ -136,9 +134,9 @@ class Game:
                 self.players[0].lost_shot += 1
                 self.players[0].enemy_board[x][y] = 'M'
 
-            self.satellite.boards[1].matrix[x][y]['visible'] = True
+            self.players[0].satellite.map.matrix[x][y]['visible'] = True
 
-            x, y = self.players[0].policy(self.satellite)
+            x, y = self.players[0].policy()
 
         self.players[0].print_stats()
 
@@ -149,19 +147,19 @@ class Game:
 
         consecutive_hits = 0
 
-        x1, y1 = self.players[0].policy(self.satellite, 1)
-        x2, y2 = self.players[1].policy(self.satellite, 0)
+        x1, y1 = self.players[0].policy()
+        x2, y2 = self.players[1].policy()
 
         while not self.game_over():
 
-            if self.satellite.check_shot(1, x1, y1):
+            if self.players[0].satellite.check_shot(x1, y1):
                 self.players[1].board.matrix[x1][y1]['ship'].hit(x1, y1)
                 self.players[0].enemy_board[x1][y1] = 'H'
                 self.players[0].hit_shot += 1
                 consecutive_hits += 1
 
                 # Ship sunk
-                if self.satellite.check_sunk(1, x1, y1):
+                if self.players[0].satellite.check_sunk(x1, y1):
                     self.players[0].sunken_ships += 1
 
             else:
@@ -172,14 +170,14 @@ class Game:
                 self.players[0].lost_shot += 1
                 self.players[0].enemy_board[x1][y1] = 'M'
 
-            if self.satellite.check_shot(0, x2, y2):
+            if self.players[1].satellite.check_shot(x2, y2):
                 self.players[0].board.matrix[x2][y2]['ship'].hit(x2, y2)
                 self.players[1].enemy_board[x2][y2] = 'H'
                 self.players[1].hit_shot += 1
                 consecutive_hits += 1
 
                 # Ship sunk
-                if self.satellite.check_sunk(0, x2, y2):
+                if self.players[1].satellite.check_sunk(x2, y2):
                     self.players[1].sunken_ships += 1
 
             else:
@@ -190,11 +188,11 @@ class Game:
                 self.players[1].lost_shot += 1
                 self.players[1].enemy_board[x2][y2] = 'M'
 
-            self.satellite.boards[1].matrix[x1][y1]['visible'] = True
-            self.satellite.boards[0].matrix[x2][y2]['visible'] = True
+            self.players[0].satellite.map.matrix[x1][y1]['visible'] = True
+            self.players[1].satellite.map.matrix[x2][y2]['visible'] = True
 
-            x1, y1 = self.players[0].policy(self.satellite, 1)
-            x2, y2 = self.players[1].policy(self.satellite, 0)
+            x1, y1 = self.players[0].policy()
+            x2, y2 = self.players[1].policy()
 
         self.players[0].print_stats()
         self.players[1].print_stats()
