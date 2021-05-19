@@ -1,5 +1,7 @@
 from Player import Player
 import random
+import numpy as np
+np.set_printoptions(precision = 2, suppress = True)
 
 
 def get_type_agent(agent):
@@ -170,9 +172,99 @@ class ReactiveAgent(Player):
         return x, y
 
 class LearningAgent(Player):
+    directions = ['l', 'u', 'r', 'd']
 
     def __init__(self):
         super().__init__('Learning')
+        self.steps = 10000
+        self.current_state = 0
+        self.num_actions = len(self.directions)
+        self.num_states = 10 * 10 #size
+        self.alpha = 0.3
+        self.gamma = 0.9
+        self.last_shooted = []
+        self.initial_shot = []
+        self.first_shot = True
+
 
     def policy(self):
+
+        Q = np.ones((self.num_states, self.num_actions))
+
+        state = 0
+
+        x , y = self.random_seek()
+
+        self.initial_shot[0] = x
+        self.initial_shot[1] = y
+
+
+
+
+        for t in range(self.steps):
+            # Choose action
+            action = self.egreedy(Q,state, 0.05)
+
+            #choose next state
+            next_state = np.random.choice(self.num_states, p = P[action][state, :])
+
+
+
+            # obtain reward
+            reward = self.rewards(self.getDirection(action))
+
+            # update Q
+            Q[state, action] += self.alpha * (reward + self.gamma * max(Q[next_state, :]) - Q[state, action])
+
+            state = next_state
+
+        print(Q)
         return
+
+    def egreedy(self, Q, state,eps):
+        p = np.random.random()
+
+        if p < eps:
+            action = np.random.choice(self.num_actions)
+        else:
+            action = np.argmax(Q[state,:])
+
+        return action
+
+    def getDirection(action):
+              
+       return{
+           'l':0,
+           'u':1,
+           'r':2,
+           'd':3
+       }[action]
+
+
+    def rewards(self, x, y):
+        if(self.satellite.check_shot(x, y)):
+            return 1  #hit
+        elif(self.satellite.check_sunk(x, y)):
+            return -1  #sunk
+        else:
+            return 0   #miss
+            
+
+
+
+    def random_seek(self):
+        x = random.randint(0, 9)
+        y = random.randint(0, 9)
+
+        # Check if already shooted that position
+        while self.satellite.check_visible(x, y):
+            x = random.randint(0, 9)
+            y = random.randint(0, 9)
+
+        self.first_shot = False
+
+        return x, y
+
+
+
+    
