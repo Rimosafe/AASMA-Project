@@ -28,26 +28,4 @@ class Player:
         else:
             print("Max consecutive hits: ", 1)
 
-    '''def shot(self, opponent_board, x, y):
-
-        # Access the satellite to check if the shot hit
-        if not self.check_satellite(opponent_board, x, y):
-
-            self.enemy_board[x][y] = 'Miss'
-            return False
-
-        # Hit the ship
-        opponent_board.matrix[x][y]['ship'].hit(x, y)
-        self.enemy_board[x][y] = 'Hit'
-        self.hit_shot += 1
-        print("Hit")
-        self.consecutive = True
-
-        if self.consecutive:
-            self.consecutive_hits += 1
-
-        # Ship sunk
-        if opponent_board.matrix[x][y]['ship'].is_sunk():
-            self.sunken_ships += 1
-
-        return True'''
+ 

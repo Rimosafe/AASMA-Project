@@ -142,8 +142,8 @@ class Game:
 
     def agent_one_vs_one(self):
 
-        self.players[0].name = 'Tobias'
-        self.players[1].name = 'Jeremias'
+        self.players[0].name = 'Agent 1'
+        self.players[1].name = 'Agent 2'
 
         consecutive_hits = 0
 
