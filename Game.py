@@ -5,7 +5,7 @@ class Game:
     COLS = 10
     ROWS = 10
 
-    AGENT_TYPES = ['Random', 'Reactive', 'Learning']
+    AGENT_TYPES = ['Random', 'Reactive', 'Learning', 'ReactivePattern']
 
     def __init__(self):
         self.players = []
