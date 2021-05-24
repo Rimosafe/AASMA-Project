@@ -110,12 +110,16 @@ class Game:
             self.agent_one_vs_one()
 
     def agent_alone(self):
+
         consecutive_hits = 0
 
         x, y = self.players[0].policy()
 
         while True:
 
+            print("Numero navios acertados")
+            print(self.players[0].sunken_ships)
+            
             if self.players[0].satellite.check_shot(x, y):
                 self.players[1].board.matrix[x][y]['ship'].hit(x, y)
                 self.players[0].enemy_board[x][y] = 'X'
@@ -153,6 +157,8 @@ class Game:
         x2, y2 = self.players[1].policy()
 
         while not self.game_over():
+            print("Numero navios acertados")
+            print(self.players[0].sunken_ships)
 
             if self.players[0].satellite.check_shot(x1, y1):
                 self.players[1].board.matrix[x1][y1]['ship'].hit(x1, y1)

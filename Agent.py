@@ -2,6 +2,7 @@ from typing import Pattern
 from Player import Player
 import random
 import numpy as np
+
 np.set_printoptions(precision = 2, suppress = True)
 
 
@@ -163,6 +164,152 @@ class ReactiveAgent(Player):
         return x, y
 
 
+class LearningAgent(Player):
+    directions = ['l', 'u', 'r', 'd']
+
+    def __init__(self):
+        super().__init__('Learning')
+        self.steps = 10000
+        self.current_state = 0
+        self.num_actions = len(self.directions)
+        self.num_states = 10 * 10 #size
+        self.alpha = 0.3
+        self.gamma = 0.9
+        self.last_shooted = []
+        self.listCoordinates = []
+        self.first_shot = True
+        self.direction = None
+
+
+    def policy(self):
+
+        Q = self.Qinit
+
+        
+
+        state = 0
+
+        for x in range(0,10):
+            for y in range(0,10):
+                self.listCoordinates.append((x,y))
+
+        for t in range(self.steps):
+            # Choose action
+            action = self.egreedy(Q,state, 0.05)
+            
+            #choose next state
+            P = np.ones((10,10))
+            next_state = np.random.choice(self.num_states,  1)
+            
+
+            currentCoordinate = np.array(self.listCoordinates)[next_state.astype(int)]
+            x = currentCoordinate[0][0]
+            y = currentCoordinate[0][1]
+            #y = np.array(self.listCoordinates)[next_state.astype(int)][1]
+
+            # obtain reward
+            reward = self.rewards(x, y)
+
+
+            # update Q
+            listNextState = Q[next_state, :].copy()
+            value1 =  np.max(listNextState) - Q[state, action]
+            value2 = self.alpha * (reward + self.gamma * value1)
+
+            Q[state, action] = Q[state, action] + value2
+            self.Qinit = Q
+            
+            state = next_state
+
+        listBestActions = []
+        listBestStates = []
+
+        # to found best action
+        for i in range(self.num_states):
+            listBestActions.append(np.argmax(Q[i, :]))
+        
+
+        bestAction = max(listBestActions,key = listBestActions.count)
+
+
+        # to found best state
+        bestState = np.argmax(Q[:, bestAction])
+
+
+        bestCoordinates = np.array(self.listCoordinates)[next_state.astype(int)]
+        x = bestCoordinates[0][0]
+        y = bestCoordinates[0][1]
+
+        return x, y
+
+    def egreedy(self, Q, state,eps):
+        p = np.random.random()
+
+        if p < eps:
+            action = np.random.choice(self.num_actions)
+        else:
+            action = np.argmax(Q[state,:])
+
+        return action
+
+    def getDirection(action):
+              
+       return{
+           'l':0,
+           'u':1,
+           'r':2,
+           'd':3
+       }[action]
+
+
+    def rewards(self, x, y):
+        if self.direction == 'l':
+            if y - 1 >= 0:
+                y = y - 1
+            else:
+                return -10
+
+        if self.direction == 'u':
+            if x - 1 >= 0:
+                x =  x - 1
+            else:
+                return -10
+
+        if self.direction == 'r':
+            if y + 1 <= 9:
+                y= y + 1
+            else:
+                return -10
+
+        if self.direction == 'd':
+            if x + 1 <= 9:
+                x = x + 1
+            else:
+                return -10
+
+
+        if(self.satellite.check_shot(x, y)):
+            return 5  #hit
+        else:
+            return -5   #miss
+            
+
+
+
+    def random_seek(self):
+        print("well")
+        x = random.randint(0, 9)
+        y = random.randint(0, 9)
+
+        # Check if already shooted that position
+        while self.satellite.check_visible(x, y):
+            x = random.randint(0, 9)
+            y = random.randint(0, 9)
+
+        self.first_shot = False
+
+        return x, y
+
 class ReactivePatternAgent(Player):
     directions = ['l', 'u', 'r', 'd']
 
@@ -317,101 +464,3 @@ class ReactivePatternAgent(Player):
         self.last_pattern.append(x)
         self.last_pattern.append(y)
         return x, y
-
-
-class LearningAgent(Player):
-    directions = ['l', 'u', 'r', 'd']
-
-    def __init__(self):
-        super().__init__('Learning')
-        self.steps = 10000
-        self.current_state = 0
-        self.num_actions = len(self.directions)
-        self.num_states = 10 * 10 #size
-        self.alpha = 0.3
-        self.gamma = 0.9
-        self.last_shooted = []
-        self.initial_shot = []
-        self.first_shot = True
-
-
-    def policy(self):
-
-        Q = np.ones((self.num_states, self.num_actions))
-
-        state = 0
-
-        x , y = self.random_seek()
-
-        self.initial_shot[0] = x
-        self.initial_shot[1] = y
-
-
-
-
-        for t in range(self.steps):
-            # Choose action
-            action = self.egreedy(Q,state, 0.05)
-
-            #choose next state
-            next_state = np.random.choice(self.num_states, p = P[action][state, :])
-
-
-
-            # obtain reward
-            reward = self.rewards(self.getDirection(action))
-
-            # update Q
-            Q[state, action] += self.alpha * (reward + self.gamma * max(Q[next_state, :]) - Q[state, action])
-
-            state = next_state
-
-        print(Q)
-        return
-
-    def egreedy(self, Q, state,eps):
-        p = np.random.random()
-
-        if p < eps:
-            action = np.random.choice(self.num_actions)
-        else:
-            action = np.argmax(Q[state,:])
-
-        return action
-
-    def getDirection(action):
-              
-       return{
-           'l':0,
-           'u':1,
-           'r':2,
-           'd':3
-       }[action]
-
-
-    def rewards(self, x, y):
-        if(self.satellite.check_shot(x, y)):
-            return 1  #hit
-        elif(self.satellite.check_sunk(x, y)):
-            return -1  #sunk
-        else:
-            return 0   #miss
-            
-
-
-
-    def random_seek(self):
-        x = random.randint(0, 9)
-        y = random.randint(0, 9)
-
-        # Check if already shooted that position
-        while self.satellite.check_visible(x, y):
-            x = random.randint(0, 9)
-            y = random.randint(0, 9)
-
-        self.first_shot = False
-
-        return x, y
-
-
-

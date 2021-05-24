@@ -1,6 +1,7 @@
 from Board import Board
 from Satellite import Satellite
 from copy import deepcopy
+import numpy as np
 
 
 class Player:
@@ -16,6 +17,7 @@ class Player:
         self.consecutive_list = []
         self.consecutive = False
         self.satellite = Satellite()
+        self.Qinit = np.ones((10*10, 4))
 
     def print_stats(self):
         print(end="\n")
