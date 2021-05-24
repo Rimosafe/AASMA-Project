@@ -8,7 +8,7 @@ class Player:
     def __init__(self, name):
         self.name = name
         self.board = Board()
-        self.enemy_board = [['U' for _ in range(10)] for _ in range(10)]
+        self.enemy_board = [['_' for _ in range(10)] for _ in range(10)]
         self.sunken_ships = 0
         self.lost_shot = 0
         self.hit_shot = 0

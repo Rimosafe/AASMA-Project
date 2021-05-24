@@ -114,17 +114,25 @@ class Game:
 
         x, y = self.players[0].policy()
 
-        while not self.game_over():
+        self.print_player_game(1)
+
+        self.print_player_game(0)
+
+        while True:
 
             if self.players[0].satellite.check_shot(x, y):
                 self.players[1].board.matrix[x][y]['ship'].hit(x, y)
-                self.players[0].enemy_board[x][y] = 'H'
+                self.players[0].enemy_board[x][y] = 'X'
                 self.players[0].hit_shot += 1
                 consecutive_hits += 1
 
                 # Ship sunk
                 if self.players[0].satellite.check_sunk(x, y):
+                    print("navio afundou")
                     self.players[0].sunken_ships += 1
+
+                if self.game_over():
+                    break
 
             else:
                 if consecutive_hits > 1:
@@ -132,11 +140,13 @@ class Game:
 
                 consecutive_hits = 0
                 self.players[0].lost_shot += 1
-                self.players[0].enemy_board[x][y] = 'M'
+                self.players[0].enemy_board[x][y] = 'O'
 
             self.players[0].satellite.map.matrix[x][y]['visible'] = True
-
+            self.print_player_game(0)
             x, y = self.players[0].policy()
+            print(x, y)
+
 
         self.players[0].print_stats()
 
@@ -178,6 +188,7 @@ class Game:
 
                 # Ship sunk
                 if self.players[1].satellite.check_sunk(x2, y2):
+                    print("navio afundou")
                     self.players[1].sunken_ships += 1
 
             else:
