@@ -197,7 +197,6 @@ class ReactivePatternAgent(Player):
         while self.satellite.check_visible(x, y):
             # First shot hit
             if self.satellite.check_shot(x, y) and self.direction is None:
-                print("Primeiro tiro acertou")
                 self.direction = 'l'
 
                 self.initial_shot.append(x)
@@ -207,7 +206,6 @@ class ReactivePatternAgent(Player):
 
             # Last shot hit and its not the first shot
             elif self.satellite.check_shot(x, y) and self.direction is not None:
-                print("Ultimo tiro acertou")
                 # If still there is directions to explore
                 if self.predict_next_shot(x, y) is not False:
                     x, y = self.predict_next_shot(x, y)
@@ -221,7 +219,6 @@ class ReactivePatternAgent(Player):
 
             # If last shot didnt hit and we are exploring a zone
             elif not self.satellite.check_shot(x, y) and self.direction is not None:
-                print("Ultimo tiro nao acertou mas zona a explorar")
                 # Check if there is another direction to explore
                 if self.next_direction() is not False:
 
@@ -246,7 +243,6 @@ class ReactivePatternAgent(Player):
 
             # If last shot didnt hit and we were not exploring a zone
             elif not self.satellite.check_shot(x, y) and self.direction is None:
-                print("Ultimo tiro nao acertou")
                 x, y = self.pattern_seek()
 
         self.last_shooted.clear()
@@ -286,7 +282,6 @@ class ReactivePatternAgent(Player):
             return False
 
         self.direction = directions[directions.index(self.direction) + 1]
-        print("changed direction to " + self.direction)
         return self.initial_shot[0], self.initial_shot[1]
 
     def pattern_seek(self):

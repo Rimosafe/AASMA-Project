@@ -114,10 +114,6 @@ class Game:
 
         x, y = self.players[0].policy()
 
-        self.print_player_game(1)
-
-        self.print_player_game(0)
-
         while True:
 
             if self.players[0].satellite.check_shot(x, y):
@@ -128,7 +124,6 @@ class Game:
 
                 # Ship sunk
                 if self.players[0].satellite.check_sunk(x, y):
-                    print("navio afundou")
                     self.players[0].sunken_ships += 1
 
                 if self.game_over():
@@ -143,10 +138,7 @@ class Game:
                 self.players[0].enemy_board[x][y] = 'O'
 
             self.players[0].satellite.map.matrix[x][y]['visible'] = True
-            self.print_player_game(0)
             x, y = self.players[0].policy()
-            print(x, y)
-
 
         self.players[0].print_stats()
 
