@@ -84,6 +84,7 @@ class Game:
             self.players.append(player2)
 
         self.place_ships_auto(1)
+        
         self.players[0].satellite.map = self.players[1].board
 
     def place_ships_manually(self, player):
@@ -116,9 +117,9 @@ class Game:
         x, y = self.players[0].policy()
 
         while True:
-
-            print("Numero navios acertados")
-            print(self.players[0].sunken_ships)
+            #print(self.print_player_game(0))
+            #print("Numero navios acertados")
+            #print(self.players[0].sunken_ships)
             
             if self.players[0].satellite.check_shot(x, y):
                 self.players[1].board.matrix[x][y]['ship'].hit(x, y)
@@ -157,8 +158,8 @@ class Game:
         x2, y2 = self.players[1].policy()
 
         while not self.game_over():
-            print("Numero navios acertados")
-            print(self.players[0].sunken_ships)
+            #print("Numero navios acertados")
+            #print(self.players[0].sunken_ships)
 
             if self.players[0].satellite.check_shot(x1, y1):
                 self.players[1].board.matrix[x1][y1]['ship'].hit(x1, y1)

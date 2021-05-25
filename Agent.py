@@ -2,6 +2,8 @@ from typing import Pattern
 from Player import Player
 import random
 import numpy as np
+import math
+
 
 np.set_printoptions(precision = 2, suppress = True)
 
@@ -169,76 +171,51 @@ class LearningAgent(Player):
 
     def __init__(self):
         super().__init__('Learning')
-        self.steps = 10000
+        self.steps = 50
         self.current_state = 0
         self.num_actions = len(self.directions)
         self.num_states = 10 * 10 #size
         self.alpha = 0.3
-        self.gamma = 0.9
-        self.last_shooted = []
+        self.gamma = 0.8
         self.listCoordinates = []
-        self.first_shot = True
         self.direction = None
 
 
     def policy(self):
-
-        Q = self.Qinit
-
         
+        Q = self.Qinit
 
         state = 0
 
-        for x in range(0,10):
-            for y in range(0,10):
-                self.listCoordinates.append((x,y))
-
         for t in range(self.steps):
+
             # Choose action
             action = self.egreedy(Q,state, 0.05)
+            self.getDirection(action)
             
             #choose next state
-            P = np.ones((10,10))
-            next_state = np.random.choice(self.num_states,  1)
+            while True:
+                next_state = np.random.choice(self.num_states,  1)
+
+                x = math.trunc( next_state[0] * 0.1 )
+                y = next_state[0] % 10
+               
+                if(not self.satellite.check_visible(x,y)):
+                    reward = self.rewards(x, y)
+                    break #found coordinates not used
+                else:
+                    reward = -1
+
             
-
-            currentCoordinate = np.array(self.listCoordinates)[next_state.astype(int)]
-            x = currentCoordinate[0][0]
-            y = currentCoordinate[0][1]
-            #y = np.array(self.listCoordinates)[next_state.astype(int)][1]
-
-            # obtain reward
-            reward = self.rewards(x, y)
-
-
             # update Q
-            listNextState = Q[next_state, :].copy()
-            value1 =  np.max(listNextState) - Q[state, action]
-            value2 = self.alpha * (reward + self.gamma * value1)
-
-            Q[state, action] = Q[state, action] + value2
+            Q[state, action] = Q[state, action] + self.alpha * (reward + self.gamma * np.max(Q[next_state, :]) - Q[state, action])
+            
             self.Qinit = Q
             
             state = next_state
 
-        listBestActions = []
-        listBestStates = []
-
-        # to found best action
-        for i in range(self.num_states):
-            listBestActions.append(np.argmax(Q[i, :]))
-        
-
-        bestAction = max(listBestActions,key = listBestActions.count)
-
-
-        # to found best state
-        bestState = np.argmax(Q[:, bestAction])
-
-
-        bestCoordinates = np.array(self.listCoordinates)[next_state.astype(int)]
-        x = bestCoordinates[0][0]
-        y = bestCoordinates[0][1]
+        x = math.trunc( state[0] * 0.1 )
+        y = state[0] % 10
 
         return x, y
 
@@ -252,47 +229,48 @@ class LearningAgent(Player):
 
         return action
 
-    def getDirection(action):
-              
-       return{
-           'l':0,
-           'u':1,
-           'r':2,
-           'd':3
-       }[action]
+    def getDirection(self, action):
+        
+        if(action == 0):
+            self.direction = 'l'
+        if(action == 1):
+            self.direction = 'u'
+        if(action == 2):
+            self.direction = 'r'
+        if(action == 3):
+            self.direction = 'd'
 
 
     def rewards(self, x, y):
+        reward = 0
         if self.direction == 'l':
-            if y - 1 >= 0:
-                y = y - 1
+            if (y - 1 >= 0) and (self.satellite.check_shot(x, y - 1) and ( not self.satellite.check_sunk(x, y - 1))):
+                reward = 1
             else:
-                return -10
+                return 0
 
         if self.direction == 'u':
-            if x - 1 >= 0:
-                x =  x - 1
+            if (x - 1 >= 0) and (self.satellite.check_shot(x - 1, y) and ( not self.satellite.check_sunk(x - 1, y))):
+                reward = 1
             else:
-                return -10
+                return 0
 
         if self.direction == 'r':
-            if y + 1 <= 9:
-                y= y + 1
+            if (y + 1 <= 9) and (self.satellite.check_shot(x, y + 1) and ( not self.satellite.check_sunk(x, y + 1))):
+                reward = 1
             else:
-                return -10
+                return 0
 
         if self.direction == 'd':
-            if x + 1 <= 9:
-                x = x + 1
+            if (x + 1 <= 9) and (self.satellite.check_shot(x + 1, y) and ( not self.satellite.check_sunk(x + 1, y))):
+                reward = 1
             else:
-                return -10
-
+                return 0
 
         if(self.satellite.check_shot(x, y)):
-            return 5  #hit
+            return reward + 1  #hit
         else:
-            return -5   #miss
-            
+            return 0   #miss
 
 
 
@@ -305,8 +283,6 @@ class LearningAgent(Player):
         while self.satellite.check_visible(x, y):
             x = random.randint(0, 9)
             y = random.randint(0, 9)
-
-        self.first_shot = False
 
         return x, y
 
