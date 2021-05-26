@@ -117,10 +117,7 @@ class Game:
         x, y = self.players[0].policy()
 
         while True:
-            #print(self.print_player_game(0))
-            #print("Numero navios acertados")
-            #print(self.players[0].sunken_ships)
-            
+
             if self.players[0].satellite.check_shot(x, y):
                 self.players[1].board.matrix[x][y]['ship'].hit(x, y)
                 self.players[0].enemy_board[x][y] = 'X'

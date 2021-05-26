@@ -39,13 +39,10 @@ class RandomAgent(Player):
 
 class ReactiveAgent(Player):
 
-    directions = ['l', 'u', 'r', 'd']
-
     def __init__(self):
         super().__init__('Reactive')
         self.last_shooted = []
-        self.initial_shot = []
-        self.direction = None
+        self.to_explore = []
         self.first_shot = True
 
     def policy(self):
@@ -62,97 +59,44 @@ class ReactiveAgent(Player):
 
         while self.satellite.check_visible(x, y):
 
-            # First shot hit
-            if self.satellite.check_shot(x, y) and self.direction is None:
-                self.direction = 'l'
+            if self.satellite.check_shot(x, y):
+                self.add_to_explore(x, y)
 
-                self.initial_shot.append(x)
-                self.initial_shot.append(y)
+                if len(self.to_explore) > 0:
+                    x, y = self.explore()
 
-                x, y = self.predict_next_shot(x, y)
-
-            # Last shot hit and its not the first shot
-            elif self.satellite.check_shot(x, y) and self.direction is not None:
-
-                # If still there is directions to explore
-                if self.predict_next_shot(x, y) is not False:
-                    x, y = self.predict_next_shot(x, y)
-
-                # Ship found. Proceed with random seek
                 else:
-                    self.direction = None
-                    self.directions = ['l', 'u', 'r', 'd']
-                    self.initial_shot.clear()
                     x, y = self.random_seek()
 
-            # If last shot didnt hit and we are exploring a zone
-            elif not self.satellite.check_shot(x, y) and self.direction is not None:
+            else:
+                if len(self.to_explore) > 0:
+                    x, y = self.explore()
 
-                # Check if there is another direction to explore
-                if self.next_direction() is not False:
-
-                    x, y = self.initial_shot[0], self.initial_shot[1]
-
-                    if self.predict_next_shot(x, y) is not False:
-                        x, y = self.predict_next_shot(x, y)
-
-                    # Proceed with random seek.
-                    else:
-                        self.direction = None
-                        self.directions = ['l', 'u', 'r', 'd']
-                        self.initial_shot.clear()
-                        x, y = self.random_seek()
-
-                # Ship found. Proceed with random seek.
                 else:
-                    self.direction = None
-                    self.directions = ['l', 'u', 'r', 'd']
-                    self.initial_shot.clear()
                     x, y = self.random_seek()
-
-            # If last shot didnt hit and we were not exploring a zone
-            elif not self.satellite.check_shot(x, y) and self.direction is None:
-                x, y = self.random_seek()
 
         self.last_shooted.clear()
         self.last_shooted.append(x)
         self.last_shooted.append(y)
         return x, y
 
-    def predict_next_shot(self, x, y):
-        if self.direction == 'l':
-            if y - 1 >= 0:
-                return x, y - 1
-            else:
-                x, y = self.next_direction()
+    def add_to_explore(self, x, y):
+        if y - 1 >= 0 and not self.satellite.check_visible(x, y - 1) and (x, y - 1) not in self.to_explore:
+            self.to_explore.append((x, y - 1))
 
-        if self.direction == 'u':
-            if x - 1 >= 0:
-                return x - 1, y
-            else:
-                x, y = self.next_direction()
+        if x - 1 >= 0 and not self.satellite.check_visible(x - 1, y) and (x - 1, y) not in self.to_explore:
+            self.to_explore.append((x - 1, y))
 
-        if self.direction == 'r':
-            if y + 1 <= 9:
-                return x, y + 1
-            else:
-                x, y = self.next_direction()
+        if y + 1 <= 9 and not self.satellite.check_visible(x, y + 1) and (x, y + 1) not in self.to_explore:
+            self.to_explore.append((x, y + 1))
 
-        if self.direction == 'd':
-            if x + 1 <= 9:
-                return x + 1, y
-            else:
-                return False
+        if x + 1 <= 9 and not self.satellite.check_visible(x + 1, y) and (x + 1, y) not in self.to_explore:
+            self.to_explore.append((x + 1, y))
 
-    def next_direction(self):
-        directions = self.directions
-
-        if directions.index(self.direction) + 1 > len(self.directions) - 1:
-            return False
-
-        self.direction = directions[directions.index(self.direction) + 1]
-        print("changed direction to" + self.direction)
-        return self.initial_shot[0], self.initial_shot[1]
+    def explore(self):
+        coordinates = self.to_explore[0]
+        self.to_explore.pop(0)
+        return coordinates[0], coordinates[1]
 
     def random_seek(self):
         x = random.randint(0, 9)
@@ -286,157 +230,84 @@ class LearningAgent(Player):
 
         return x, y
 
+
 class ReactivePatternAgent(Player):
-    directions = ['l', 'u', 'r', 'd']
 
     def __init__(self):
         super().__init__('ReactivePattern')
         self.last_shooted = []
-        self.initial_shot = []
-        self.last_pattern = []
-        self.direction = None
+        self.to_explore = []
+        self.odd_cells = [(0, 0), (0, 2), (0, 4), (0, 6), (0, 8),
+                          (1, 1), (1, 3), (1, 5), (1, 7), (1, 9),
+                          (2, 0), (2, 2), (2, 4), (2, 6), (2, 8),
+                          (3, 1), (3, 3), (3, 5), (3, 7), (3, 9),
+                          (4, 0), (4, 2), (4, 4), (4, 6), (4, 8),
+                          (5, 1), (5, 3), (5, 5), (5, 7), (5, 9),
+                          (6, 0), (6, 2), (6, 4), (6, 6), (6, 8),
+                          (7, 1), (7, 3), (7, 5), (7, 7), (7, 9),
+                          (8, 0), (8, 2), (8, 4), (8, 6), (8, 8),
+                          (9, 1), (9, 3), (9, 5), (9, 7), (9, 9)]
         self.first_shot = True
 
     def policy(self):
-        # If agent's first shot
+
         if self.first_shot:
             self.first_shot = False
-            # Starts at the top-right cell of the board
-            x, y = 0, 9
-
-            # Add both to the last shooted list
+            x, y = self.seek()
             self.last_shooted.append(x)
             self.last_shooted.append(y)
-
-            # Keep the last pattern cell
-            self.last_pattern.append(x)
-            self.last_pattern.append(y)
             return x, y
 
-        # If agent's not first shot
         x = self.last_shooted[0]
         y = self.last_shooted[1]
 
         while self.satellite.check_visible(x, y):
-            # First shot hit
-            if self.satellite.check_shot(x, y) and self.direction is None:
-                self.direction = 'l'
 
-                self.initial_shot.append(x)
-                self.initial_shot.append(y)
+            if self.satellite.check_shot(x, y):
+                self.add_to_explore(x, y)
 
-                x, y = self.predict_next_shot(x, y)
+                if len(self.to_explore) > 0:
+                    x, y = self.explore()
 
-            # Last shot hit and its not the first shot
-            elif self.satellite.check_shot(x, y) and self.direction is not None:
-                # If still there is directions to explore
-                if self.predict_next_shot(x, y) is not False:
-                    x, y = self.predict_next_shot(x, y)
-
-                # Ship found. Proceed with random seek
                 else:
-                    self.direction = None
-                    self.directions = ['l', 'u', 'r', 'd']
-                    self.initial_shot.clear()
-                    x, y = self.pattern_seek()
+                    x, y = self.seek()
 
-            # If last shot didnt hit and we are exploring a zone
-            elif not self.satellite.check_shot(x, y) and self.direction is not None:
-                # Check if there is another direction to explore
-                if self.next_direction() is not False:
+            else:
+                if len(self.to_explore) > 0:
+                    x, y = self.explore()
 
-                    x, y = self.initial_shot[0], self.initial_shot[1]
-
-                    if self.predict_next_shot(x, y) is not False:
-                        x, y = self.predict_next_shot(x, y)
-
-                    # Proceed with random seek.
-                    else:
-                        self.direction = None
-                        self.directions = ['l', 'u', 'r', 'd']
-                        self.initial_shot.clear()
-                        x, y = self.pattern_seek()
-
-                # Ship found. Proceed with random seek.
                 else:
-                    self.direction = None
-                    self.directions = ['l', 'u', 'r', 'd']
-                    self.initial_shot.clear()
-                    x, y = self.pattern_seek()
-
-            # If last shot didnt hit and we were not exploring a zone
-            elif not self.satellite.check_shot(x, y) and self.direction is None:
-                x, y = self.pattern_seek()
+                    x, y = self.seek()
 
         self.last_shooted.clear()
         self.last_shooted.append(x)
         self.last_shooted.append(y)
         return x, y
 
-    def predict_next_shot(self, x, y):
-        if self.direction == 'l':
-            if y - 1 >= 0:
-                return x, y - 1
-            else:
-                x, y = self.next_direction()
+    def add_to_explore(self, x, y):
+        if y - 1 >= 0 and not self.satellite.check_visible(x, y - 1) and (x, y - 1) not in self.to_explore:
+            self.to_explore.append((x, y - 1))
 
-        if self.direction == 'u':
-            if x - 1 >= 0:
-                return x - 1, y
-            else:
-                x, y = self.next_direction()
+        if x - 1 >= 0 and not self.satellite.check_visible(x - 1, y) and (x - 1, y) not in self.to_explore:
+            self.to_explore.append((x - 1, y))
 
-        if self.direction == 'r':
-            if y + 1 <= 9:
-                return x, y + 1
-            else:
-                x, y = self.next_direction()
+        if y + 1 <= 9 and not self.satellite.check_visible(x, y + 1) and (x, y + 1) not in self.to_explore:
+            self.to_explore.append((x, y + 1))
 
-        if self.direction == 'd':
-            if x + 1 <= 9:
-                return x + 1, y
-            else:
-                return False
+        if x + 1 <= 9 and not self.satellite.check_visible(x + 1, y) and (x + 1, y) not in self.to_explore:
+            self.to_explore.append((x + 1, y))
 
-    def next_direction(self):
-        directions = self.directions
+    def explore(self):
+        coordinates = self.to_explore[0]
+        self.to_explore.pop(0)
+        return coordinates[0], coordinates[1]
 
-        if directions.index(self.direction) + 1 > len(self.directions) - 1:
-            return False
+    def seek(self):
+        coordinates = random.choice(self.odd_cells)
 
-        self.direction = directions[directions.index(self.direction) + 1]
-        return self.initial_shot[0], self.initial_shot[1]
+        # Check if already shooted that position
+        while self.satellite.check_visible(coordinates[0], coordinates[1]):
+            coordinates = random.choice(self.odd_cells)
 
-    def pattern_seek(self):
-        # Pattern: right-to-left, top-down
-        x = self.last_pattern[0]
-        y = self.last_pattern[1]
-
-        # Check if already shooted that position; if so, redo the calculations
-        while self.satellite.check_visible(x, y):
-            # Check if the row is even
-            if x % 2 == 0:
-                # If we reach the end of the row, proceed to next row (odd)
-                if y == 1:
-                    y = 8
-                    x += 1
-                # If we didn't reach the end of the row, just proceed to next cell
-                else:
-                    y -= 2
-
-            # Check if the row is odd
-            else:
-                # If we reach the end of the row, proceed to next row (even)
-                if y == 0:
-                    y = 9
-                    x += 1
-                # If we didn't reach the end of the row, just proceed to next cell
-                else:
-                    y -= 2
-
-        # Clean the old coordinates
-        self.last_pattern.clear()
-        # And add the ones calculated
-        self.last_pattern.append(x)
-        self.last_pattern.append(y)
-        return x, y
+        self.odd_cells.remove(coordinates)
+        return coordinates[0], coordinates[1]
