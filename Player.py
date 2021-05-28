@@ -17,7 +17,6 @@ class Player:
         self.consecutive_list = []
         self.consecutive = False
         self.satellite = Satellite()
-        self.Qinit = np.zeros((10*10, 4))
 
     def print_stats(self):
         print(end="\n")

@@ -126,12 +126,15 @@ class Board:
 
     def build_fleet_manually(self):
         while len(self.ships) != 5:
-            name, x, y, direction = input(" Enter ship of type: name x y direction ").split()
-            self.add_ship_manually(name, int(x), int(y), direction)
+            try:
+                name, x, y, direction = input(" Enter ship of type: name x y direction ").split()
+                self.add_ship_manually(name, int(x), int(y), direction)
+            except ValueError:
+                print('Missing values.')
 
     def remove_ship(self, ship):
         for position in ship.locations:
-            self.matrix[position['x']][position['y']] = deepcopy(self.default_ship_value)
+            self.matrix[position['x']][position['y']] = deepcopy(self.default_loc)
 
     def print_location(self, x, y):
         if self.matrix[x][y]['ship'] is not None:
